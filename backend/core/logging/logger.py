@@ -1,40 +1,40 @@
-"""
-ERIS Structured Logging Subsystem.
-Configures system-wide logging channels connected to application settings.
-"""
-
 import logging
 import sys
-from typing import Optional
 
-from backend.core.config import get_settings
+from backend.core.config.settings import Config
 
 
-def setup_logger(name: str = "ERIS") -> logging.Logger:
+def get_logger(name: str = "ERIS") -> logging.Logger:
     """
-    Factory function providing a configured logger instance.
-
-    :param name: Namespace identifier for the logger instance.
-    :return: Formatted logging.Logger object.
+    Returns a configured logger instance for the given module name.
+    Ensures consistent formatting, a single handler (no duplicate log lines
+    on repeated calls), and a log level driven by Config.LOG_LEVEL — falling
+    back safely to INFO if that value is missing or invalid.
     """
-    settings = get_settings()
-    logger = logging.getLogger(name)
+    logger_instance = logging.getLogger(name)
 
-    # Avoid duplicate handlers if re-initialized
-    if not logger.handlers:
-        logger.setLevel(settings.LOG_LEVEL)
-
+    if not logger_instance.handlers:
         handler = logging.StreamHandler(sys.stdout)
         formatter = logging.Formatter(
-            fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S"
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
         handler.setFormatter(formatter)
-        logger.addHandler(handler)
-        logger.propagate = False
+        logger_instance.addHandler(handler)
 
-    return logger
+        level_name = (getattr(Config, "LOG_LEVEL", None) or "INFO").upper()
+        level = logging.getLevelName(level_name)
+        # logging.getLevelName() returns a string like "Level X" for an
+        # unrecognized name instead of raising — guard against that so a
+        # typo'd LOG_LEVEL in .env can never crash startup.
+        if not isinstance(level, int):
+            level = logging.INFO
+        logger_instance.setLevel(level)
+
+    return logger_instance
 
 
-# Primary logger instance for core kernel initialization
-logger = setup_logger("ERIS.Kernel")
+# Backward-compatible alias — earlier ERIS code called this "setup_logger".
+setup_logger = get_logger
+
+# Centralized module-level logger instance exported across ERIS.
+logger = get_logger("ERIS")

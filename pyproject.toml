@@ -1,0 +1,40 @@
+[project]
+name = "eris-assistant"
+version = "2.9.1"
+description = "ERIS — Evolutionary Responsive Intelligence System: a modular, provider-agnostic personal AI assistant."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENCE" }
+dependencies = [
+    "google-genai>=1.0.0",
+    "openai>=1.0.0",
+    "ollama>=0.4.0",
+    "python-dotenv>=1.0.1",
+    "fastapi>=0.110.0",
+    "uvicorn>=0.28.0",
+    "pydantic>=2.0.0",
+    "faster-whisper>=1.0.0",
+    "PyAudio>=0.2.14",
+    "pyttsx3>=2.90",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-mock>=3.14.0",
+    "httpx>=0.27.0",
+]
+
+[project.scripts]
+eris = "apps.cli.main:main"
+eris-voice = "apps.voice.main:main"
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["backend*", "apps*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

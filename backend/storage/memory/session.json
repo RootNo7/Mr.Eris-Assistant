@@ -1,0 +1,10 @@
+[
+    {
+        "role": "user",
+        "text": "Summarize what you remember about me."
+    },
+    {
+        "role": "assistant",
+        "text": "\nI encountered an error while processing your request.\n'NoneType' object has no attribute 'models'"
+    }
+]

@@ -1,175 +1,65 @@
-Architecture
+# ERIS — Evolutionary Responsive Intelligence System
 
-«Project: ERIS (Evolutionary Responsive Intelligent System)
-Version: v1 Foundation
-Status: Active Development»
+A modular, provider-agnostic personal AI digital intelligence system.
 
----
+## Status
 
-Overview
+**v2.8.4** — Security & Runtime Stabilization.
+Focuses on platform security hardening and runtime stabilization: deny-by-default approval gating (`AutoApprovalGate(default_approved=False)`), strict desktop application allowlisting (`KNOWN_APP_MAP`) with `shell=False` execution, process cancellation and timeout safety (`BaseTool.cancel()`), production voice composition wiring (`create_production_voice_pipeline`), real pyttsx3 WAV audio synthesis and Windows `winsound.PlaySound` playback, API error message sanitization, resilient lazy SDK initialization for offline test stability, and source release hygiene.
 
-ERIS is designed as a modular, provider-agnostic Personal AI Operating System. Rather than building features around a specific AI model, ERIS separates intelligence providers from the core application through a clean abstraction layer.
 
-The objective of v1 is to establish a stable architectural foundation that future versions can extend without major redesign.
 
----
+## Setup
 
-Design Principles
+```bash
+python -m venv .venv
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+pip install -r requirements.txt
+cp .env.example .env               # Fill in your GEMINI_API_KEY / OPENROUTER_API_KEY
+```
 
-The architecture is guided by the following principles:
+## Run
 
-- Foundation First — prioritize a stable core before advanced capabilities.
-- Separation of Concerns — each module has a single responsibility.
-- Provider Independence — application logic must never depend on a specific AI provider.
-- Modularity — components should be independently replaceable and testable.
-- Incremental Evolution — extend the system instead of rewriting it.
+### CLI Interface
+```bash
+python -m apps.cli.main
+```
 
----
+### API Server & Web UI
+```bash
+python -m apps.api.main
+```
+Then open `http://localhost:8000` in your browser.
 
-System Architecture
+## Test
 
-User
-  │
-  ▼
-Frontend
-  │
-  ▼
-FastAPI API
-  │
-  ▼
-Conversation Engine
-  │
-  ▼
-Provider Manager
-  │
-  ▼
-AI Provider Interface
-  │
-  ▼
-Google Gemini
+```bash
+python -m pytest
+```
 
-Application logic communicates only with the Provider Manager, allowing AI providers to be replaced or expanded without affecting the rest of the system.
+## Project Structure
 
----
+```
+apps/
+├── api/             REST & SSE API launcher (FastAPI)
+├── cli/             Terminal conversation loop with ANSI styling
+└── web/             ChatGPT-style HTML5/CSS Web UI frontend
+backend/
+├── ai/              Conversation history buffer & SQLite long-term memory store
+├── core/            Authoritative version, structured exceptions, config, & logging
+├── providers/       AIProvider interface & implementations (Gemini, OpenRouter, Ollama)
+├── security/        Action Permission Framework (enums, PolicyEngine, ApprovalGate, AuditLogger, CentralToolExecutor)
+├── server/          FastAPI endpoints, authorization middleware, & schemas
+└── tools/           BaseTool with risk metadata, ToolRegistry, PC automation tools, & SystemInfo tool
+docs/                Architecture documentation, decision log, roadmap, & state
+tests/
+└── unit/            Comprehensive unit test suite
+```
 
-Repository Structure
+## Security
 
-ERIS/
-├── backend/
-│   ├── api/
-│   ├── ai/
-│   ├── core/
-│   ├── providers/
-│   ├── services/
-│   ├── models/
-│   └── tests/
-├── frontend/
-├── docs/
-├── configs/
-├── scripts/
-└── tests/
-
-Each directory represents a distinct architectural responsibility and should remain loosely coupled.
-
----
-
-Core Components
-
-Component| Responsibility
-Frontend| User interface and client-side interactions
-API| HTTP endpoints, request validation, response handling
-Conversation Engine| Session management and dialogue orchestration
-Provider Layer| AI provider abstraction and integrations
-Core| Configuration, logging, exceptions, shared utilities
-
----
-
-AI Provider Architecture
-
-ERIS uses a provider abstraction layer to isolate model-specific implementations.
-
-Application
-      │
-      ▼
-Provider Manager
-      │
-      ▼
-Provider Interface
-      │
-      ▼
-Gemini Provider
-
-Google Gemini is the initial provider for v1.
-
-Future providers such as OpenAI, Anthropic, Ollama, llama.cpp, and other local or cloud models will implement the same interface.
-
----
-
-Current Scope (v1)
-
-The current version focuses on establishing the foundation:
-
-- Modular project structure
-- Configuration system
-- Logging and error handling
-- Provider abstraction
-- Google Gemini integration
-- Conversation engine
-- FastAPI backend
-- Web frontend
-- Documentation
-- Initial testing
-
-Advanced capabilities are intentionally deferred until the foundation is stable.
-
----
-
-Future Roadmap
-
-Version| Focus
-v1| Foundation and Gemini integration
-v2| Persistent memory, tools, local AI support
-v3| Voice, vision, plugins, richer interaction
-v4| Automation, device integration, multi-agent workflows
-v5+| Long-term platform evolution and future AI capabilities
-
-Each version builds on the existing architecture without unnecessary rewrites.
-
----
-
-Engineering Standards
-
-All new modules should be:
-
-- Modular
-- Documented
-- Testable
-- Loosely coupled
-- Secure by default
-- Easy to maintain
-
-Architecture should evolve through extension rather than replacement.
-
----
-
-Architecture Decisions
-
-Significant architectural decisions should be documented as Architecture Decision Records (ADRs) under:
-
-docs/decisions/
-
-Each ADR should explain:
-
-- The problem
-- The decision
-- Alternatives considered
-- Rationale
-- Consequences
-
----
-
-Success Criteria
-
-ERIS v1 is considered complete when it provides a stable, maintainable, and provider-agnostic foundation with Google Gemini integrated through the provider abstraction layer.
-
-The success of v1 is measured by the quality of its architecture—not by the number of implemented features.
+- Security policies are strictly enforced in **executable application code** (`CentralToolExecutor`), never relying solely on system prompts or LLM instructions.
+- Central Chokepoint validates tool parameters, evaluates risk policy, requires approval for sensitive actions (T3/T4), enforces execution timeouts, and records structured audit events.
+- Real secrets live only in `.env`, which is git-ignored. `.env.example` contains placeholder values only.
+- Configurable Bearer API token security (`ERIS_AUTH_ENABLED=true` and `ERIS_API_KEY`) protects endpoints when exposed over local networks or Zero-Trust remote tunnels (Tailscale / Cloudflare Tunnel).

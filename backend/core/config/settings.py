@@ -1,50 +1,60 @@
-"""
-ERIS System Configuration Schema.
-Defines strongly typed application settings and environment loader.
-"""
+import os
+from dotenv import load_dotenv
+from backend.core.exceptions import ConfigurationError
 
-from typing import Literal
-from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+# Load variables from the .env file into the environment
+load_dotenv()
 
 
-class Settings(BaseSettings):
-    """Core settings schema for ERIS system kernel."""
+class Config:
+    """
+    Centralized configuration for ERIS.
+    Ensures secrets, security posture, and filesystem guard options are loaded safely.
+    """
 
-    # Environment Configuration
-    ENVIRONMENT: Literal["development", "staging", "production", "testing"] = Field(
-        default="development",
-        description="Active application operational state"
-    )
-    LOG_LEVEL: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = Field(
-        default="INFO",
-        description="System logging output threshold"
-    )
+    DEFAULT_OPENROUTER_MODEL = "meta-llama/llama-3.3-70b-instruct:free"
 
-    # Cloud AI Intelligence Provider Settings
-    GEMINI_API_KEY: str = Field(
-        ...,
-        description="Google Gemini Cloud API key credential"
-    )
-    DEFAULT_GEMINI_MODEL: str = Field(
-        default="gemini-2.5-flash",
-        description="Default Gemini model tier for primary inference"
-    )
+    def __init__(self):
+        self.ENVIRONMENT = os.getenv("ENVIRONMENT", "development")
+        self.LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+        self.ACTIVE_PROVIDER = os.getenv("ACTIVE_PROVIDER", "gemini").lower()
+        self.GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+        self.OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+        self.OPENROUTER_MODEL = os.getenv("OPENROUTER_MODEL", self.DEFAULT_OPENROUTER_MODEL)
+        self.ERIS_AUTH_ENABLED = os.getenv("ERIS_AUTH_ENABLED", "false").lower() in ("true", "1", "yes")
+        self.ERIS_API_KEY = os.getenv("ERIS_API_KEY")
 
-    # API Server Settings
-    API_V1_STR: str = Field(
-        default="/api/v1",
-        description="API endpoint namespace prefix"
-    )
-    PROJECT_NAME: str = Field(
-        default="ERIS Personal AI OS",
-        description="Application core name"
-    )
+        # Action Permission Framework & Filesystem Guard Settings
+        self.ERIS_SECURITY_MODE = os.getenv("ERIS_SECURITY_MODE", "balanced").lower()
+        self.ERIS_MAX_AUTO_RISK = os.getenv("ERIS_MAX_AUTO_RISK", "T1").upper()
+        self.ERIS_ALLOWED_FS_ROOTS = os.getenv("ERIS_ALLOWED_FS_ROOTS", os.getcwd())
+        
+        try:
+            self.ERIS_TOOL_TIMEOUT = float(os.getenv("ERIS_TOOL_TIMEOUT", "15.0"))
+        except ValueError:
+            self.ERIS_TOOL_TIMEOUT = 15.0
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf-8",
-        extra="ignore",
-        case_sensitive=True
-    )
-    
+        try:
+            self.ERIS_MAX_FILE_SIZE_BYTES = int(os.getenv("ERIS_MAX_FILE_SIZE_BYTES", "10485760"))
+        except ValueError:
+            self.ERIS_MAX_FILE_SIZE_BYTES = 10485760
+
+        self.validate()
+
+    def validate(self):
+        """Validates that strictly required environment variables are present."""
+        if self.ACTIVE_PROVIDER == "gemini" and not self.GEMINI_API_KEY:
+            raise ConfigurationError("GEMINI_API_KEY is missing from the environment.")
+        elif self.ACTIVE_PROVIDER == "openrouter" and not self.OPENROUTER_API_KEY:
+            raise ConfigurationError("OPENROUTER_API_KEY is missing from the environment.")
+
+        if self.ERIS_AUTH_ENABLED and not self.ERIS_API_KEY:
+            raise ConfigurationError("ERIS_AUTH_ENABLED is True but ERIS_API_KEY is missing from the environment.")
+
+    @property
+    def environment(self) -> str:
+        return self.ENVIRONMENT
+
+    @property
+    def log_level(self) -> str:
+        return self.LOG_LEVEL

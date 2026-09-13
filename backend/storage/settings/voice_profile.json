@@ -1,0 +1,25 @@
+{
+  "active_profile_id": "default",
+  "profiles": {
+    "default": {
+      "id": "default",
+      "name": "Default Voice Profile",
+      "enabled": true,
+      "language": "en-US",
+      "locale": "en-US",
+      "voice_id": "default",
+      "speaking_speed": 1.0,
+      "response_style": "neutral",
+      "verbosity": "normal",
+      "wake_word": "eris",
+      "wake_word_enabled": true,
+      "wake_word_sensitivity": 0.5,
+      "quiet_mode": false,
+      "interruption_enabled": true,
+      "streaming_enabled": true,
+      "pronunciation_dictionary": {},
+      "created_at": 1787216787.2274194,
+      "updated_at": 1787216787.2274206
+    }
+  }
+}

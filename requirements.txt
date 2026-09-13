@@ -1,0 +1,20 @@
+# ERIS v2.8.4 — runtime dependencies
+# Python: >=3.10
+
+# AI providers
+google-genai>=1.0.0
+openai>=1.0.0
+ollama>=0.4.0
+
+# Configuration / environment
+python-dotenv>=1.0.1
+
+# Web/API server
+fastapi>=0.110.0
+uvicorn>=0.28.0
+pydantic>=2.0.0
+
+# Voice subsystem
+faster-whisper>=1.0.0
+PyAudio>=0.2.14
+pyttsx3>=2.90
